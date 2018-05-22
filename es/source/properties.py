@@ -16,7 +16,7 @@ class Properties(object):
         file_name = file_name if file_name else 'setting'
         self.properties = ConfigParser.ConfigParser()
         try:
-            self.properties.read('/opt/delu/' + file_name + '.conf')
+            self.properties.read('/apps/conf/blog/' + file_name + '.conf')
         except Exception as e:
             self.logger.exception(e)
 
