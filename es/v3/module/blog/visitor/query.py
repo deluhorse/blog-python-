@@ -15,5 +15,6 @@ class Controller(Base):
     @tornado.gen.coroutine
     def get(self):
         params = self.params()
+        params['is_open'] = 1
         res = yield self.do_service('blog.service', 'query_blog', params=params)
         self.out(res)

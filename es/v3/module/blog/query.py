@@ -19,6 +19,5 @@ class Controller(Base):
     def get(self):
         params = self.params()
         params['user_id'] = self.user_data['user_id']
-        params['is_open'] = 1
         res = yield self.do_service('blog.service', 'query_blog', params=params)
         self.out(res)

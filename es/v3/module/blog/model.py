@@ -25,7 +25,7 @@ class Model(AsyncModelBase):
         if 'blog_id' in params and params['blog_id']:
             condition += ' and blog_id = %s '
             value_list.append(params['blog_id'])
-        if 'is_open' in params and params['is_open']:
+        if 'is_open' in params:
             condition += ' and is_open = %s '
             value_list.append(params['is_open'])
         order = ' create_time DESC '
