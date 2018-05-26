@@ -31,8 +31,6 @@ class Service(ServiceBase):
         :param params: 
         :return: 
         """
-        if self.common_utils.is_empty(['user_id'], params):
-            raise self._gre('PARAMS_NOT_EXIST')
         result = yield self.do_model('blog.model', 'query_blog', params)
         if not result:
             raise self._gre('BLOG_NOT_FOUND')
