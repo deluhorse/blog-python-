@@ -6,11 +6,13 @@ import json
 
 import conf.config as config
 import random
+import time
 from source.controller import Controller
 from source.service_manager import ServiceManager as serviceManager
 from tools.date_json_encoder import CJsonEncoder
 from constants.error_code import Code
 from source.redisbase import RedisBase
+from source.properties import Properties
 
 
 class Base(Controller):
@@ -21,6 +23,7 @@ class Base(Controller):
     user_data = {}
     auth = None
     _params = {}
+    properties = Properties()
 
     @tornado.gen.coroutine
     def prepare(self):
@@ -61,8 +64,9 @@ class Base(Controller):
         :return: 
         """
         token = self.salt()
-        self.redis.hmset(token, params)
-        self.set_cookie('token', token)
+        expire_time = int(self.properties.get('expire', 'USER_EXPIRE'))
+        self.redis.hmset(token, params, expire_time)
+        self.set_cookie('token', token, expires=int(time.time()) + expire_time)
 
     def salt(self, salt_len=6, is_num=False):
         """ 

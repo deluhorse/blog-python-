@@ -16,22 +16,10 @@ class Model(AsyncModelBase):
         """
         创建图片库记录
         """
-        try:
-            cfg_photo_key = 'host_type, img_key'
-            cfg_photo_value_tuple = (params['host'], params['key'])
-            cfg_photo = yield self.insert('tbl_cfg_photo', {self.sql_constants.KEY: cfg_photo_key},
-                                          cfg_photo_value_tuple, auto_commit=False)
-            if not cfg_photo:
-                raise self._gr(False)
-            user_photo_key = 'user_id, photo_id'
-            user_photo_value_tuple = (params['user_id'], cfg_photo['last_id'])
-            yield self.insert('tbl_um_photo', {self.sql_constants.KEY: user_photo_key},
-                              user_photo_value_tuple, auto_commit=False)
-            yield self.tx.commit()
-        except Exception:
-            yield self.tx.rollback()
-            raise self._gr(False)
-        raise self._gr(True)
+        key = 'user_id, host_type, img_key, nick_name'
+        value_tuple = (params['user_id'], params['host'], params['key'], params.get('nick_name', '未命名'))
+        result = yield self.insert('tbl_um_photo', {self.sql_constants.KEY: key}, value_tuple)
+        raise self._gr(result)
 
     @tornado.gen.coroutine
     def query_photo_list(self, params):
@@ -40,22 +28,17 @@ class Model(AsyncModelBase):
         :param params: 
         :return: 
         """
-        fields = [
-            'user_photo.*',
-            'cfg_photo.host_type',
-            'cfg_photo.img_key'
-        ]
-        condition = ' cfg_photo.img_key is not null '
+        condition = ' img_key is not null '
         value_list = []
 
-        join = [{self.sql_constants.TABLE_NAME: 'tbl_cfg_photo as cfg_photo',
-                 self.sql_constants.JOIN_CONDITION: ' user_photo.photo_id = cfg_photo.photo_id '}]
-        if 'user_photo.user_id' in params and params['user_id']:
-            condition += ' and user_photo.user_id = %s '
+        if 'user_id' in params and params['user_id']:
+            condition += ' and user_id = %s '
             value_list.append(params['user_id'])
-        result = yield self.find('tbl_um_photo as user_photo', {self.sql_constants.CONDITION: condition,
-                                                                self.sql_constants.FIELDS: fields,
-                                                                self.sql_constants.JOIN: join},
-                                 tuple(value_list),
-                                 self.sql_constants.LIST)
+        result = yield self.find(
+            'tbl_um_photo',
+            {
+                self.sql_constants.CONDITION: condition
+            },
+            tuple(value_list),
+            self.sql_constants.LIST)
         raise self._gr(result)

@@ -160,9 +160,32 @@ class RedisBase(object):
         except Exception, e:
             print e
 
+    def subsribe(self, channel_list):
+        try:
+            resource = self.get_conn()
+            p = resource.pubsub()
+            p.subscribe(channel_list)
+            return p
+        except Exception as e:
+            print e
+            return None
+
+    def publish(self, channel, message):
+        try:
+            resource = self.get_conn()
+            resource.publish(channel, message)
+        except Exception as e:
+            print e
+
 if __name__ == '__main__':
+
     r = RedisBase()
-    r.set('testkey',10)
-    print r.get('testkey')
-    r.incr('testkey', 100)
-    print r.get('testkey')
+    p = r.subsribe(['channel1'])
+
+    for item in p.listen():
+
+        if item['type'] == 'pmessage' or item['type'] == 'message':
+
+            print(item['channel'])
+
+            print(item['data'])

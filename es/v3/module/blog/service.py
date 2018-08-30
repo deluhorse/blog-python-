@@ -47,15 +47,71 @@ class Service(ServiceBase):
         raise self._grs(result)
 
     @tornado.gen.coroutine
+    def query_blog_detail(self, params):
+        """
+        查询博文详情
+        :param params: 
+        :return: 
+        """
+        if self.common_utils.is_empty(['blog_id', 'user_id'], params):
+            raise self._gre('BLOG_NOT_FOUND')
+        result = yield self.blog_model.query_blog_single(params)
+        if not result:
+            raise self._gre('BLOG_NOT_FOUND')
+        raise self._grs(result)
+
+    @tornado.gen.coroutine
+    def query_blog_page(self, params):
+        """
+        分页查询博文
+        :param params: 
+        :return: 
+        """
+        result = yield self.do_model('blog.model', 'query_blog_page', params)
+        if not result:
+            raise self._gre('SQL_EXECUTE_ERROR')
+        for blog in result['list']:
+            blog['create_time'] = self.date_utils.time_to_str(blog['create_time'])
+        raise self._grs(result)
+
+    @tornado.gen.coroutine
     def create_blog(self, params):
         """
-        创建博客记录
+        创建博文
         :param params: 
         :return: 
         """
         if self.common_utils.is_empty(['user_id', 'title', 'content'], params):
             raise self._gre('PARAMS_NOT_EXIST')
         result = yield self.do_model('blog.model', 'create_blog', params)
+        if not result:
+            raise self._gre('SQL_EXECUTE_ERROR')
+        raise self._grs()
+
+    @tornado.gen.coroutine
+    def update_blog(self, params):
+        """
+        更新博文
+        :param params: 
+        :return: 
+        """
+        if self.common_utils.is_empty(['user_id', 'blog_id', 'title', 'content'], params):
+            raise self._gre('PARAMS_NOT_EXIST')
+        result = yield self.do_model('blog.model', 'update_blog', params)
+        if not result:
+            raise self._gre('SQL_EXECUTE_ERROR')
+        raise self._grs()
+
+    @tornado.gen.coroutine
+    def delete_blog(self, params):
+        """
+        删除博文
+        :param params: 
+        :return: 
+        """
+        if self.common_utils.is_empty(['user_id', 'blog_id'], params):
+            raise self._gre('PARAMS_NOT_EXIST')
+        result = yield self.do_model('blog.model', 'delete_blog', params)
         if not result:
             raise self._gre('SQL_EXECUTE_ERROR')
         raise self._grs()
