@@ -13,6 +13,7 @@ from tools.date_json_encoder import CJsonEncoder
 from constants.error_code import Code
 from source.redisbase import RedisBase
 from source.properties import Properties
+from tools.logs import Logs
 
 
 class Base(Controller):
@@ -24,6 +25,7 @@ class Base(Controller):
     auth = None
     _params = {}
     properties = Properties()
+    logger = Logs().get_logger()
 
     @tornado.gen.coroutine
     def prepare(self):
@@ -32,6 +34,7 @@ class Base(Controller):
                 # 如果控制器需要登录, 则进行登录检查
                 token = self.get_cookie('token')
                 self.user_data = self.redis.hgetall(token)
+                self.logger.info(token, self.user_data)
                 if not self.user_data:
                     self.error_out(self._e('NOT_LOGIN'))
                     self.finish()
