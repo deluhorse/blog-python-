@@ -43,13 +43,11 @@ class Model(AsyncModelBase):
         :return: 
         """
         condition = ' blog_id = %s and is_delete = 0 '
-        value_list = []
+        value_list = [params['blog_id']]
 
         if 'user_id' in params and params['user_id']:
             condition += ' and user_id = %s '
             value_list.append(params['user_id'])
-
-        value_list.append(params['blog_id'])
 
         result = yield self.find('tbl_um_blog', {self.sql_constants.CONDITION: condition}, tuple(value_list))
 
