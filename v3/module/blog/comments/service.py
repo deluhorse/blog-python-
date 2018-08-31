@@ -32,6 +32,9 @@ class Service(ServiceBase):
         if self.common_utils.is_empty(['blog_id', 'nick_name', 'comment_content'], params):
             raise self._gre('PARAMS_NOT_EXIST')
 
+        params['nick_name'] = self.common_utils.escape_html(params['nick_name'])
+        params['comment_content'] = self.common_utils.escape_html(params['comment_content'])
+
         # 检查博文是否有效
         blog_result = yield self.do_service('blog.service', 'query_blog_detail', params)
         if blog_result['code'] != 0:

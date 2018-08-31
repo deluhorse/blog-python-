@@ -71,6 +71,9 @@ class Model(AsyncModelBase):
 
                 for reply in reply_list:
 
+                    reply['nick_name'] = self.util.un_escape_html(reply['nick_name'])
+                    reply['reply_content'] = self.util.un_escape_html(reply['reply_content'])
+
                     comment_id = reply['comment_id']
 
                     if comment_id in comment_dict:
@@ -80,6 +83,9 @@ class Model(AsyncModelBase):
                         comment_dict[comment_id] = [reply]
 
             for comment in comment_list:
+
+                comment['nick_name'] = self.util.un_escape_html(comment['nick_name'])
+                comment['comment_content'] = self.util.un_escape_html(comment['comment_content'])
 
                 comment_id = comment['comment_id']
 

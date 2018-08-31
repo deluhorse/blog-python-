@@ -38,6 +38,8 @@ class Service(ServiceBase):
             raise self._gr(comment_result)
 
         params['parent_reply_id'] = params.get('parent_reply_id', 0)
+        params['nick_name'] = self.common_utils.escape_html(params['nick_name'])
+        params['reply_content'] = self.common_utils.escape_html(params['reply_content'])
 
         result = yield self.do_model('blog.comments.reply.model', 'create_reply', params)
 
