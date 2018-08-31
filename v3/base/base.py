@@ -34,7 +34,6 @@ class Base(Controller):
                 # 如果控制器需要登录, 则进行登录检查
                 token = self.get_cookie('token')
                 self.user_data = self.redis.hgetall(token)
-                self.logger.info(token, self.user_data)
                 if not self.user_data:
                     self.error_out(self._e('NOT_LOGIN'))
                     self.finish()
