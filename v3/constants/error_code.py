@@ -35,6 +35,7 @@ Code = {
     'PHOTO_NOT_FOUND': {'code': 2002, 'msg': '照片未找到'},
     # 3 博客
     'BLOG_NOT_FOUND': {'code': 3001, 'msg': '博客未找到'},
+    'BLOG_COMMENT_NOT_FOUND': {'code': 3002, 'msg': '评论未找到'},
     # 4 用户
     'USER_NOT_FOUND': {'code': 3002, 'msg': '用户未找到'},
     'ACCOUNT_REPEAT': {'code': 3003, 'msg': '该用户已存在'},

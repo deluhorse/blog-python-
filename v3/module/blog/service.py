@@ -53,7 +53,7 @@ class Service(ServiceBase):
         :param params: 
         :return: 
         """
-        if self.common_utils.is_empty(['blog_id', 'user_id'], params):
+        if self.common_utils.is_empty(['blog_id'], params):
             raise self._gre('BLOG_NOT_FOUND')
         result = yield self.blog_model.query_blog_single(params)
         if not result:
