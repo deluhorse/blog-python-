@@ -5,8 +5,8 @@
 @file: gunicorn.py.py
 @time: 18/9/1 12:23
 """
-import gevent.monkey
-gevent.monkey.patch_all()
+# import gevent.monkey
+# gevent.monkey.patch_all()
 import multiprocessing
 bind = '0.0.0.0:9000'      #绑定ip和端口号
 backlog = 512                #监听队列

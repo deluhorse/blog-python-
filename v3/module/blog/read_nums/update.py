@@ -15,5 +15,5 @@ class Controller(Base):
     @tornado.gen.coroutine
     def post(self):
         params = self.params()
-        res = yield self.do_service('user.user_service', 'create', params=params)
+        res = yield self.do_service('blog.read_nums.service', 'update_read_nums', params=params)
         self.out(res)
