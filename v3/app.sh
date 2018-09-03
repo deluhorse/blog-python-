@@ -14,7 +14,7 @@ elif [ "$command" = "stop" ]; then
 
 elif [ "$command" = "start" ]; then
     echo "start"
-    gunicorn -c /apps/web/blog_python/v3/gunicorn.py index:app -D --capture-output --enable-stdio-inheritance
+    gunicorn -c /apps/web/blog_python/v3/gunicorn_conf.py index:app -D --capture-output --enable-stdio-inheritance
     ps -ef | grep python
 
 else
