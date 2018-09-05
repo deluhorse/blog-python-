@@ -81,12 +81,17 @@ class Service(ServiceBase):
         :param params: 
         :return: 
         """
-        if self.common_utils.is_empty(['user_id', 'title', 'content'], params):
+        if self.common_utils.is_empty(['user_id', 'content'], params):
             raise self._gre('PARAMS_NOT_EXIST')
-        result = yield self.do_model('blog.model', 'create_blog', params)
+
+        if 'blog_id' in params and params['blog_id']:
+            result = yield self.update_blog(params)
+        else:
+            result = yield self.do_model('blog.model', 'create_blog', params)
+            result['blog_id'] = result['last_id']
         if not result:
             raise self._gre('SQL_EXECUTE_ERROR')
-        raise self._grs()
+        raise self._grs(result)
 
     @tornado.gen.coroutine
     def update_blog(self, params):
@@ -95,12 +100,12 @@ class Service(ServiceBase):
         :param params: 
         :return: 
         """
-        if self.common_utils.is_empty(['user_id', 'blog_id', 'title', 'content'], params):
+        if self.common_utils.is_empty(['user_id', 'blog_id', 'content'], params):
             raise self._gre('PARAMS_NOT_EXIST')
         result = yield self.do_model('blog.model', 'update_blog', params)
         if not result:
             raise self._gre('SQL_EXECUTE_ERROR')
-        raise self._grs()
+        raise self._grs(params['blog_id'])
 
     @tornado.gen.coroutine
     def delete_blog(self, params):

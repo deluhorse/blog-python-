@@ -227,9 +227,8 @@ class AsyncModelBase(SqlBuilder):
                 self.tx = None
             else:
                 cursor = yield self.tx.execute(sql, value_tuple)
-            # result = self.sql_constants.SUCCESS.copy()
-            # result['affected_rows'] = cursor.rowcount
-            result = cursor.rowcount
+            result = self.sql_constants.SUCCESS.copy()
+            result['affected_rows'] = cursor.rowcount
         except Exception, e:
             print sql
             self.logger.exception(e)

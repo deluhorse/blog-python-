@@ -98,7 +98,7 @@ class Model(AsyncModelBase):
         :return: 
         """
         key = 'user_id, title, content'
-        value_tuple = (params['user_id'], params['title'], params['content'])
+        value_tuple = (params['user_id'], params.get('title', '无标题'), params['content'])
         result = yield self.insert('tbl_um_blog', {self.sql_constants.KEY: key}, value_tuple)
         raise self._gr(result)
 
@@ -114,7 +114,7 @@ class Model(AsyncModelBase):
             'content=%s'
         ]
         condition = ' blog_id = %s and user_id = %s '
-        value_tuple = (params['title'], params['content'], params['blog_id'], params['user_id'])
+        value_tuple = (params.get('title', '无标题'), params['content'], params['blog_id'], params['user_id'])
         result = yield self.update(
             'tbl_um_blog',
             {
