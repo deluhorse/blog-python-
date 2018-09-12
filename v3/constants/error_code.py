@@ -40,5 +40,8 @@ Code = {
     'USER_NOT_FOUND': {'code': 3002, 'msg': '用户未找到'},
     'ACCOUNT_REPEAT': {'code': 3003, 'msg': '该用户已存在'},
     'ACCOUNT_NOT_FOUND': {'code': 3004, 'msg': '账户未找到'},
-    'PASSWORD_ERROR': {'code': 3005, 'msg': '密码错误'}
+    'PASSWORD_ERROR': {'code': 3005, 'msg': '密码错误'},
+
+    # 5 分组
+    'GROUP_NOT_FOUND': {'code': 5001, 'msg': '分组未找到'}
 }
