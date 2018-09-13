@@ -33,10 +33,19 @@ class Service(ServiceBase):
         if self.common_utils.is_empty(['parent_group_id', 'group_name', 'user_id'], params):
             raise self._gre('PARAMS_NOT_EXIST')
 
+        parent_height_result = yield self.query_group_single({'group_id': params['parent_group_id']})
+
+        if parent_height_result['code'] != 0:
+            raise self._gr(parent_height_result)
+
+        params['height'] = parent_height_result['data'] + 1
+
         result = yield self.do_model('blog.group.model', 'create_group', params)
 
         if not result:
             raise self._gre('SQL_EXECUTE_ERROR')
+
+        result['height'] = params['height']
 
         raise self._grs(result)
 
@@ -172,3 +181,26 @@ class Service(ServiceBase):
             final_group_list.extend(self.__tree_parse_list(group['sub_group_list']))
 
         return final_group_list
+
+    @tornado.gen.coroutine
+    def query_group_single(self, params):
+        """
+        查询单个分组
+        :param params: 
+        :return: 
+        """
+        if self.common_utils.is_empty(['group_id'], params):
+            raise self._gre('PARAMS_NOT_EXIST')
+
+        group_result = yield self.do_model('blog.group.model', 'query_group_single', params)
+
+        if group_result is False:
+            raise self._grs('')
+
+        height = 0
+
+        if group_result:
+
+            height = group_result['height']
+
+        raise self._grs(height)

@@ -110,18 +110,40 @@ class Model(AsyncModelBase):
         :return: 
         """
         fields = [
-            'title=%s',
-            'content=%s'
+            'blog_id=%s'
         ]
+
+        value_list = [params['blog_id']]
+
+        if 'title' in params and params['title']:
+
+            fields.append('title=%s')
+
+            value_list.append(params['title'])
+
+        if 'content' in params and params['content']:
+
+            fields.append('content=%s')
+
+            value_list.append(params['content'])
+
+        if 'group_id' in params and params['group_id']:
+
+            fields.append('group_id=%s')
+
+            value_list.append(params['group_id'])
+
         condition = ' blog_id = %s and user_id = %s '
-        value_tuple = (params.get('title', '无标题'), params['content'], params['blog_id'], params['user_id'])
+
+        value_list.extend([params['blog_id'], params['user_id']])
+
         result = yield self.update(
             'tbl_um_blog',
             {
                 self.sql_constants.FIELDS: fields,
                 self.sql_constants.CONDITION: condition
             },
-            value_tuple
+            tuple(value_list)
         )
         raise self._gr(result)
 

@@ -16,8 +16,8 @@ class Model(AsyncModelBase):
         """
         创建分组
         """
-        key = 'parent_group_id, group_name, user_id'
-        value_tuple = (params['parent_group_id'], params['group_name'], params['user_id'])
+        key = 'parent_group_id, group_name, user_id, height'
+        value_tuple = (params['parent_group_id'], params['group_name'], params['user_id'], params['height'])
         result = yield self.insert('tbl_blog_group', {self.sql_constants.KEY: key}, value_tuple)
 
         raise self._gr(result)
