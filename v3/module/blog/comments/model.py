@@ -16,8 +16,9 @@ class Model(AsyncModelBase):
         """
         创建评论
         """
-        key = 'blog_id, nick_name, comment_content'
-        value_tuple = (params['blog_id'], params['nick_name'], params['comment_content'])
+        key = 'blog_id, nick_name, comment_content, email, website'
+        value_tuple = (params['blog_id'], params['nick_name'], params['comment_content'],
+                       params['email'], params['website'])
         result = yield self.insert(
             'tbl_blog_comments',
             {

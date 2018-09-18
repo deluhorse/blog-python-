@@ -29,11 +29,13 @@ class Service(ServiceBase):
         :param params: 
         :return: 
         """
-        if self.common_utils.is_empty(['blog_id', 'nick_name', 'comment_content'], params):
+        if self.common_utils.is_empty(['blog_id', 'nick_name', 'comment_content', 'email'], params):
             raise self._gre('PARAMS_NOT_EXIST')
 
         params['nick_name'] = self.common_utils.escape_html(params['nick_name'])
         params['comment_content'] = self.common_utils.escape_html(params['comment_content'])
+        params['email'] = self.common_utils.escape_html(params['email'])
+        params['website'] = self.common_utils.escape_html(params.get('website', ''))
 
         # 检查博文是否有效
         blog_result = yield self.do_service('blog.service', 'query_blog_detail', params)

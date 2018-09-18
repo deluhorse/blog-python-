@@ -5,8 +5,14 @@
 @file: delu.py
 @time: 18/6/13 15:36
 """
-from source.redisbase import RedisBase
 
-redis = RedisBase()
 
-redis.publish('channel1', 'hello')
+def hello(*xxx):
+    print(xxx)
+
+
+def hello1(fields):
+    hello(*fields)
+
+
+hello1(1, 2, 3)

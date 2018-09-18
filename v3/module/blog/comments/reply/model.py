@@ -16,9 +16,9 @@ class Model(AsyncModelBase):
         """
         创建回复
         """
-        key = 'parent_reply_id, comment_id, blog_id, nick_name, reply_content'
+        key = 'parent_reply_id, comment_id, blog_id, nick_name, reply_content, email, website'
         value_tuple = (params['parent_reply_id'], params['comment_id'], params['blog_id'],
-                       params['nick_name'], params['reply_content'])
+                       params['nick_name'], params['reply_content'], params['email'], params['website'])
         result = yield self.insert(
             'tbl_blog_comments_reply',
             {

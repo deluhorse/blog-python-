@@ -62,6 +62,13 @@ class RedisBase(object):
         except Exception, e:
             print e
 
+    def hincr(self, key, field, increment=1):
+        try:
+            resource = self.get_conn()
+            return resource.hincrby(key, field, increment)
+        except Exception as e:
+            print e
+
     def hgetall(self, key):
         try:
             resource = self.get_conn()
@@ -87,6 +94,13 @@ class RedisBase(object):
         try:
             resource = self.get_conn()
             return resource.expire(key, int(second))
+        except Exception, e:
+            print e
+
+    def exist(self, key):
+        try:
+            resource = self.get_conn()
+            return resource.exists(key)
         except Exception, e:
             print e
 

@@ -29,7 +29,7 @@ class Service(ServiceBase):
         :param params: 
         :return: 
         """
-        if self.common_utils.is_empty(['blog_id', 'comment_id', 'nick_name', 'reply_content'], params):
+        if self.common_utils.is_empty(['blog_id', 'comment_id', 'nick_name', 'reply_content', 'email'], params):
             raise self._gre('PARAMS_NOT_EXIST')
 
         # 检查评论是否有效
@@ -40,6 +40,8 @@ class Service(ServiceBase):
         params['parent_reply_id'] = params.get('parent_reply_id', 0)
         params['nick_name'] = self.common_utils.escape_html(params['nick_name'])
         params['reply_content'] = self.common_utils.escape_html(params['reply_content'])
+        params['email'] = self.common_utils.escape_html(params['email'])
+        params['website'] = self.common_utils.escape_html(params.get('website', ''))
 
         result = yield self.do_model('blog.comments.reply.model', 'create_reply', params)
 
