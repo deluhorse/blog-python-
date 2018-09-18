@@ -41,6 +41,8 @@ class Service(ServiceBase):
         params['nick_name'] = self.common_utils.escape_html(params['nick_name'])
         params['reply_content'] = self.common_utils.escape_html(params['reply_content'])
         params['email'] = self.common_utils.escape_html(params['email'])
+        if 'website' in params and (not params['website'].startswith('http://') or params['website'].startswith('https://')):
+            params['website'] = 'http://' + params['website']
         params['website'] = self.common_utils.escape_html(params.get('website', ''))
 
         result = yield self.do_model('blog.comments.reply.model', 'create_reply', params)

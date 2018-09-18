@@ -35,6 +35,8 @@ class Service(ServiceBase):
         params['nick_name'] = self.common_utils.escape_html(params['nick_name'])
         params['comment_content'] = self.common_utils.escape_html(params['comment_content'])
         params['email'] = self.common_utils.escape_html(params['email'])
+        if 'website' in params and (not params['website'].startswith('http://') or params['website'].startswith('https://')):
+            params['website'] = 'http://' + params['website']
         params['website'] = self.common_utils.escape_html(params.get('website', ''))
 
         # 检查博文是否有效
