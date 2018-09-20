@@ -8,6 +8,8 @@
 import json
 import HTMLParser
 import cgi
+import string
+import traceback
 from source.properties import Properties
 from tools.logs import Logs
 
@@ -113,34 +115,27 @@ class CommonUtil(object):
         return html_parser.unescape(content)
 
     @staticmethod
-    def decode_chunked(content):
-        content = content.lstrip('\r')
-        content = content.lstrip('\n')
-        temp = content.find('\r\n')
-        strtemp = content[0:temp]
-        readbytes = int(strtemp, 16)
-        newcont = ''
-        start = 2
-        offset = temp + 2
-        newcont = ''
-        while(readbytes > 0):
-            newcont += content[offset:readbytes + offset]
-            offset += readbytes
-            endtemp = content.find('\r\n', offset + 2)
-            if(endtemp > -1):
-                strtemp = content[offset + 2:endtemp]
-                readbytes = int(strtemp, 16)
-                if(readbytes == 0):
-                    break
-                else:
-                    offset = endtemp + 2
-        content = newcont
-        return content
+    def decode_chunked(data):
+        pos = 0
+        temp = 0
+        final_data = ''
+
+        data_list = data.split('/r/n')
+
+        for temp in data_list:
+
+            if not temp.isdigit():
+
+                final_data += temp
+
+        return final_data
 
 
 if __name__ == '__main__':
-    # common = CommonUtil()
-    # string = common.escape_html("<script></script>")
-    # print string
-    x = int('0xa', 16)
-    print x
+
+    data = '05/r/nThis /r/n07/r/nstring /r/n12/r/nis chunked encoded/r/n01/r/n!/r/n00/r/n'
+
+    final_data = CommonUtil.decode_chunked(data)
+
+    print(final_data)
+
