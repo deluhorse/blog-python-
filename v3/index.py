@@ -12,7 +12,7 @@ from route import route
 import source.controller as controller
 from conf.config import CONF
 
-print 'server started, version: ' + CONF['version']
+print('server started, version: ' + CONF['version'])
 
 if __name__ == '__main__':
     controller.server().start(route, CONF)
