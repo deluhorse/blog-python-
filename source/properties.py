@@ -3,7 +3,7 @@
 配置文件属性
 """
 
-import ConfigParser
+import configparser
 from tools.logs import Logs
 
 
@@ -14,7 +14,7 @@ class Properties(object):
 
     def __init__(self, file_name=None):
         file_name = file_name if file_name else 'setting'
-        self.properties = ConfigParser.ConfigParser()
+        self.properties = configparser.ConfigParser()
         try:
             # self.properties.read('/apps/conf/blog/' + file_name + '.conf')
             self.properties.read('../' + file_name + '.conf')

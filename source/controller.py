@@ -56,8 +56,7 @@ class Controller(tornado.web.RequestHandler):
             try:
                 self.render("%s/%s/%s.html" % (view_path, self.__class__.__name__, view_name),
                             controller=self.__class__.__name__, **self.view_data)
-            except Exception, e:
-                print e
+            except Exception as e:
                 self.redirect('/700')
                 return
         else:
@@ -106,8 +105,7 @@ class Controller(tornado.web.RequestHandler):
         try:
             model = importlib.import_module(self.version + '.model.' + model_name)
             return model.Model(self.model)
-        except Exception, e:
-            print e
+        except Exception as e:
             return None
 
     def import_service(self, service_name):
@@ -120,8 +118,7 @@ class Controller(tornado.web.RequestHandler):
         try:
             service = importlib.import_module(self.version + '.service.' + service_name)
             return service.Service()
-        except Exception, e:
-            print e
+        except Exception as e:
             return None
 
     def write_error(self, status_code, **kwargs):
@@ -148,7 +145,7 @@ class Controller(tornado.web.RequestHandler):
         """
         if self._headers_written:
             # gen_log.error("Cannot send error response after headers written")
-            print 'Cannot send error response after headers written'
+            print('Cannot send error response after headers written')
             if not self._finished:
                 self.finish()
             return
@@ -159,10 +156,9 @@ class Controller(tornado.web.RequestHandler):
         self.set_status(status_code)
         try:
             self.write_error(status_code, **kwargs)
-        except Exception, e:
-            print e
-        if not self._finished:
-            self.finish()
+        except Exception as e:
+            if not self._finished:
+                self.finish()
 
 
 class server(object):
@@ -175,7 +171,7 @@ class server(object):
         # 获取参数
         argv = sys.argv
         if len(argv) < 2:
-            print 'no port, eg. python2 index.py 9000'
+            print('no port, eg. python2 index.py 9000')
             exit()
 
         host = argv[1]

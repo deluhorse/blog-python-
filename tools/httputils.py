@@ -6,7 +6,6 @@
 @time: 17/5/2 上午10:36
 """
 import urllib
-import urllib2
 import json
 import tornado.gen
 from tornado.httpclient import HTTPRequest
@@ -20,46 +19,6 @@ logger = Logs().logger
 
 
 class HttpUtils(object):
-    @staticmethod
-    def do_get(url, params=''):
-        """
-        发送get请求
-        :param url: 
-        :param params: 
-        :return: 
-        """
-        print '发送请求 url: %s, params : ' % url
-        print params
-        url_params = '?'
-        if len(params) > 0:
-            for key in params:
-                url_params += '%s=%s&' % (key, params[key])
-            url += url_params + 'x=1'
-        req = urllib2.Request(url)
-        res_data = urllib2.urlopen(req)
-        res = res_data.read()
-        print '请求结果 %s' % res
-        return res
-
-    @staticmethod
-    def do_post(url, params={}, headers={}):
-        """
-        发送post请求
-        :param url: 
-        :param params: 
-        :return: 
-        """
-        logger.info('发送请求 url: %s, params: %s', url, json.dumps(params))
-        params_urlencode = params if isinstance(params, str) else urllib.urlencode(params)
-        if headers:
-            # req = urllib2.Request(url=url, data=json.dumps(params, ensure_ascii=False), headers=headers)
-            req = urllib2.Request(url=url, data=params_urlencode, headers=headers)
-        else:
-            req = urllib2.Request(url=url, data=params_urlencode)
-        res_data = urllib2.urlopen(req, timeout=10)
-        res = res_data.read()
-        logger.info('请求结果 %s', res)
-        return res
 
     @staticmethod
     def do_post_with_cert(url, params={}, headers={}, client_key=None, client_cert=None):
@@ -85,12 +44,12 @@ class HttpUtils(object):
         try:
             fetch_result = yield http_client.fetch(http_request)
             return_data = fetch_result.body
-        except Exception, e:
+        except Exception as e:
             logger.exception(e)
         if is_json:
             try:
                 return_data = json.loads(return_data.replace('\r\n', ''))
-            except Exception, e:
+            except Exception as e:
                 logger.exception('json error', e)
         raise tornado.gen.Return(return_data)
 
@@ -109,7 +68,7 @@ class HttpUtils(object):
         if is_json:
             try:
                 return_data = json.loads(return_data.replace('\r\n', ''))
-            except Exception, e:
+            except Exception as e:
                 logger.exception('json error', e)
         raise tornado.gen.Return(return_data)
 
@@ -180,9 +139,7 @@ class HttpUtils(object):
                     model.sql_constants.FIELDS: fields,
                     model.sql_constants.CONDITION: condition
                 }, value_tuple)
-        except Exception, e:
-            logger.error('HTTP.POST Exception: %s, path: %s, method: %s, params: %s' % (
-                e, 'tools.httputils', 'write_log', params))
+        except Exception as e:
             return None
 
     @staticmethod
@@ -327,7 +284,7 @@ class HttpUtils(object):
                 }, value_tuple)
                 result_data = result
                 raise Exception()
-        except Exception, e:
+        except Exception as e:
             if result_data is None and log_id:
                 logger.error('HTTP.POST Exception: %s, path: %s, method: %s, params: %s' % (
                     e, 'tools.httputils', 'write_log_asyn', params))

@@ -5,7 +5,6 @@
 @file: sql_builder.py
 @time: 17/4/20 上午10:23
 """
-import MySQLdb
 from source.properties import Properties
 from source.sql_constants import SqlConstants
 
@@ -336,4 +335,3 @@ if __name__ == '__main__':
     my_list = [1, 2, 3]
 
     my_list.extend(my_list)
-    print my_list

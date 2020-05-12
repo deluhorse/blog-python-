@@ -22,8 +22,8 @@ class RedisBase(object):
         try:
             resource = self.get_conn()
             resource.set(key, value)
-        except Exception, e:
-            print Exception, ':', e
+        except Exception as e:
+            pass
 
     def set(self, key, value, second=0):
         try:
@@ -32,23 +32,23 @@ class RedisBase(object):
                 resource.setex(key, second, value)
             else:
                 resource.set(key, value)
-        except Exception, e:
-            print Exception, ':', e
+        except Exception as e:
+            pass
 
     def get(self, key):
         try:
             resource = self.get_conn()
             return resource.get(key)
-        except Exception, e:
-            print Exception, ':', e
+        except Exception as e:
+            pass
 
     def delete(self, *key):
         result = None
         try:
             resource = self.get_conn()
             result = resource.delete(*key)
-        except Exception, e:
-            print Exception, ':', e
+        except Exception as e:
+            pass
         return result
 
     def hmset(self, key, value, second=0):
@@ -59,120 +59,120 @@ class RedisBase(object):
                 if second > 0:
                     pipe.expire(key, int(second))
                 pipe.execute()
-        except Exception, e:
-            print e
+        except Exception as e:
+            pass
 
     def hincr(self, key, field, increment=1):
         try:
             resource = self.get_conn()
             return resource.hincrby(key, field, increment)
         except Exception as e:
-            print e
+            pass
 
     def hgetall(self, key):
         try:
             resource = self.get_conn()
             return resource.hgetall(key)
-        except Exception, e:
-            print e
+        except Exception as e:
+            pass
 
     def mget(self, key):
         try:
             resource = self.get_conn()
             return resource.mget(key)
-        except Exception, e:
-            print e
+        except Exception as e:
+            pass
 
     def ttl(self, key):
         try:
             resource = self.get_conn()
             return resource.ttl(key)
-        except Exception, e:
-            print e
+        except Exception as e:
+            pass
 
     def expire(self, key, second=0):
         try:
             resource = self.get_conn()
             return resource.expire(key, int(second))
-        except Exception, e:
-            print e
+        except Exception as e:
+            pass
 
     def exist(self, key):
         try:
             resource = self.get_conn()
             return resource.exists(key)
-        except Exception, e:
-            print e
+        except Exception as e:
+            pass
 
     def incr(self, key, amount=1):
         try:
             resource = self.get_conn()
             return resource.incr(key, amount)
-        except Exception, e:
-            print e
+        except Exception as e:
+            pass
 
     def decr(self, key, amount=1):
         try:
             resource = self.get_conn()
             return resource.decr(key, amount)
-        except Exception, e:
-            print e
+        except Exception as e:
+            pass
 
     def sadd(self, key, value):
         try:
             resource = self.get_conn()
             return resource.sadd(key, value)
-        except Exception, e:
-            print e
+        except Exception as e:
+            pass
 
     def smembers(self, key):
         try:
             resource = self.get_conn()
             return resource.smembers(key)
-        except Exception, e:
-            print e
+        except Exception as e:
+            pass
 
     def spop(self, key):
         try:
             resource = self.get_conn()
             return resource.spop(key)
-        except Exception, e:
-            print e
+        except Exception as e:
+            pass
 
     def lpush(self, key, value):
         try:
             resource = self.get_conn()
             return resource.lpush(key, value)
-        except Exception, e:
-            print e
+        except Exception as e:
+            pass
 
     def rpop(self, key):
         try:
             resource = self.get_conn()
             return resource.rpop(key)
-        except Exception, e:
-            print e
+        except Exception as e:
+            pass
 
     def llen(self, key):
         try:
             resource = self.get_conn()
             return resource.llen(key)
-        except Exception, e:
-            print e
+        except Exception as e:
+            pass
 
     def hincrby(self, key, field, increment=1):
         try:
             resource = self.get_conn()
             return resource.hincrby(key, field, increment)
-        except Exception, e:
-            print e
+        except Exception as e:
+            pass
 
     def hget(self, key, field):
         try:
             resource = self.get_conn()
             return resource.hget(key, field)
-        except Exception, e:
-            print e
+        except Exception as e:
+            pass
 
     def subsribe(self, channel_list):
         try:
@@ -181,7 +181,6 @@ class RedisBase(object):
             p.subscribe(channel_list)
             return p
         except Exception as e:
-            print e
             return None
 
     def publish(self, channel, message):
@@ -189,7 +188,7 @@ class RedisBase(object):
             resource = self.get_conn()
             resource.publish(channel, message)
         except Exception as e:
-            print e
+            pass
 
 if __name__ == '__main__':
 

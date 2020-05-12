@@ -3,7 +3,7 @@
 空路由错误处理，访问不存在地址时生效
 """
 
-from base import Base
+from base.base import Base
 
 
 class Error(Base):

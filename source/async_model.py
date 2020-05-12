@@ -1,48 +1,52 @@
 # -*- coding:utf-8 -*-
 
 import tornado.gen
-import tornado_mysql
-from tornado_mysql import pools
+import tormysql
 import json
 
 from constants.cachekey_predix import CacheKeyPredix
-from source.redisbase import RedisBase
-# from source.async_redis import AsyncRedis
+from source.async_redis import AsyncRedis
 from source.properties import Properties
 from source.sql_builder import SqlBuilder
 from source.sql_builder_orm import SqlBuilderOrm
 from tools.date_json_encoder import CJsonEncoder
 from tools.common_util import CommonUtil
+from tools.date_utils import DateUtils
 from tools.logs import Logs
+from constants import constants
 
 properties = Properties()
 
 
 class AsyncModelBase(SqlBuilder):
-    async_pools = pools.Pool(dict(
+    async_pools = tormysql.helpers.ConnectionPool(
+        max_connections=20,  # max open connections
+        idle_seconds=150,  # conntion idle timeout time, 0 is not timeout
+        wait_connection_timeout=3,  # wait connection timeout
         host=properties.get('jdbc', 'DB_HOST'),
         port=int(properties.get('jdbc', 'DB_PORT')),
         user=properties.get('jdbc', 'DB_USER'),
         passwd=properties.get('jdbc', 'DB_PASS'),
         db=properties.get('jdbc', 'DB_BASE'),
-        charset='utf8',
-        autocommit=False,
-        cursorclass=tornado_mysql.cursors.DictCursor
-    ), max_idle_connections=5, max_open_connections=100)
-
+        charset="utf8mb4",
+        cursorclass=tormysql.cursor.DictCursor
+        # max_recycle_sec=int(properties.get('jdbc', 'MAX_RECYCLE_SEC'))
+    )
     tx = None
     sql_builder_orm = None
     if not sql_builder_orm:
         sql_builder_orm = SqlBuilderOrm()
 
-    redis = RedisBase()
-    # redis = AsyncRedis()
+    # redis = RedisBase()
+    redis = AsyncRedis()
     json = json
     cache_key_predix = CacheKeyPredix
     properties = properties
     date_encoder = CJsonEncoder
     util = CommonUtil
+    date_utils = DateUtils
     logger = Logs().logger
+    constants = constants.Constants
 
     @tornado.gen.coroutine
     def do_sqls(self, params_list):
@@ -77,10 +81,10 @@ class AsyncModelBase(SqlBuilder):
                 yield tx.commit()
                 # result = self._gr(self.sql_constants.SUCCESS.copy())
                 result = self._gr(True)
-        except Exception, e:
+        except Exception as e:
             yield tx.rollback()
             self.logger.exception(e)
-            print sql
+            self.logger.info(sql)
             raise self._gr(None)
         raise result
 
@@ -100,14 +104,21 @@ class AsyncModelBase(SqlBuilder):
             dict_list = cursor.fetchall()
 
             cursor = yield self.async_pools.execute(sql_count, value_tuple)
-            dic_rows = cursor.fetchone()
+            if 'group_by' in params and params['group_by']:
+                rows = cursor.fetchall()
+                dic_rows = {
+                    'row_count': len(rows)
+                }
+            else:
+                dic_rows = cursor.fetchone()
+
             result = {
                 'list': dict_list,
                 'row_count': dic_rows[self.sql_constants.ROW_COUNT] if dic_rows else 0
             }
-        except Exception, e:
-            print sql
-            print sql_count
+        except Exception as e:
+            self.logger.info(sql)
+            self.logger.info(sql_count)
             self.logger.exception(e)
         raise self._gr(result)
 
@@ -125,19 +136,22 @@ class AsyncModelBase(SqlBuilder):
             dic_rows = cursor.fetchone()
 
             result = dic_rows[self.sql_constants.ROW_COUNT] if dic_rows else 0
-        except Exception, e:
-            print sql_count
+        except Exception as e:
+            self.logger.info(sql_count)
             self.logger.exception(e)
         raise self._gr(result)
 
     @tornado.gen.coroutine
-    def find(self, table_name, params={}, value_tuple=(), str_type='one'):
+    def find(self, table_name='', params={}, value_tuple=(), str_type='one', sql=''):
         """
         查询
-        :param params: 
-        :return: 
+        :param params:
+        :return:
         """
-        sql = self.build_select(table_name, params)
+        if sql:
+            sql = sql
+        else:
+            sql = self.build_select(table_name, params)
         result = False
         try:
             cursor = yield self.async_pools.execute(sql, value_tuple)
@@ -145,9 +159,8 @@ class AsyncModelBase(SqlBuilder):
                 result = cursor.fetchall()
             else:
                 result = cursor.fetchone()
-        except Exception, e:
-            print e
-            print sql
+        except Exception as e:
+            self.logger.info(sql)
             self.logger.exception(e)
         raise self._gr(result)
 
@@ -173,10 +186,9 @@ class AsyncModelBase(SqlBuilder):
             result = self.sql_constants.SUCCESS.copy()
             result['last_id'] = id
             result['affected_rows'] = cursor.rowcount
-        except Exception, e:
+        except Exception as e:
             self.tx.rollback()
-            print sql
-            print value_tuple
+            self.logger.info(sql)
             self.logger.exception(e)
         raise self._gr(result)
 
@@ -203,9 +215,8 @@ class AsyncModelBase(SqlBuilder):
                 cursor = yield self.tx.execute(sql, value_tuple)
             result = self.sql_constants.SUCCESS.copy()
             result['affected_rows'] = cursor.rowcount
-        except Exception, e:
-            print sql
-            print value_tuple
+        except Exception as e:
+            self.logger.info(sql)
             self.logger.exception(e)
         raise self._gr(result)
 
@@ -227,10 +238,11 @@ class AsyncModelBase(SqlBuilder):
                 self.tx = None
             else:
                 cursor = yield self.tx.execute(sql, value_tuple)
-            result = self.sql_constants.SUCCESS.copy()
-            result['affected_rows'] = cursor.rowcount
-        except Exception, e:
-            print sql
+            # result = self.sql_constants.SUCCESS.copy()
+            # result['affected_rows'] = cursor.rowcount
+            result = cursor.rowcount
+        except Exception as e:
+            self.logger.info(sql)
             self.logger.exception(e)
         raise self._gr(result)
 
@@ -255,8 +267,8 @@ class AsyncModelBase(SqlBuilder):
             # result = self.sql_constants.SUCCESS
             # result['affected_rows'] = cursor.rowcount
             result = cursor.rowcount
-        except Exception, e:
-            print sql
+        except Exception as e:
+            self.logger.info(sql)
             self.logger.exception(e)
 
         raise self._gr(result)
@@ -287,9 +299,8 @@ class AsyncModelBase(SqlBuilder):
                 result = cursor.fetchall()
             else:
                 result = cursor.fetchone()
-        except Exception, e:
-            print sql
-            print value_tuple
+        except Exception as e:
+            self.logger.info(sql)
             self.logger.exception(e)
         raise self._gr(result)
 
@@ -315,7 +326,7 @@ class AsyncModelBase(SqlBuilder):
             result = {
                 'last_id': cursor.lastrowid
             }
-        except Exception, e:
+        except Exception as e:
             self.tx.rollback()
             self.logger.exception(e)
         raise self._gr(result)
@@ -340,8 +351,8 @@ class AsyncModelBase(SqlBuilder):
                 cursor = yield self.tx.execute(sql, value_tuple)
             result = self.sql_constants.SUCCESS
             result['affected_rows'] = cursor.rowcount
-        except Exception, e:
-            print sql
+        except Exception as e:
+            self.logger.info(sql)
             self.logger.exception(e)
         raise self._gr(result)
 
@@ -366,8 +377,8 @@ class AsyncModelBase(SqlBuilder):
             # result = self.sql_constants.SUCCESS
             # result['affected_rows'] = cursor.rowcount
             result = cursor.rowcount
-        except Exception, e:
-            print sql
+        except Exception as e:
+            self.logger.info(sql)
             self.logger.exception(e)
         raise self._gr(result)
 
@@ -392,9 +403,8 @@ class AsyncModelBase(SqlBuilder):
                 'list': dict_list,
                 'row_count': dic_rows[self.sql_constants.ROW_COUNT] if dic_rows else 0
             }
-        except Exception, e:
-            print sql
-            print sql_count
+        except Exception as e:
+            self.logger.info(sql)
             self.logger.exception(e)
         raise self._gr(result)
 
@@ -412,8 +422,8 @@ class AsyncModelBase(SqlBuilder):
             dic_rows = cursor.fetchone()
 
             result = dic_rows[self.sql_constants.ROW_COUNT] if dic_rows else 0
-        except Exception, e:
-            print sql_count
+        except Exception as e:
+            self.logger.info(sql_count)
             self.logger.exception(e)
         raise self._gr(result)
 
@@ -441,49 +451,56 @@ class AsyncModelBase(SqlBuilder):
                 elif sql_type == self.sql_constants.DELETE:
                     # 删除
                     sql, value_tuple = self.sql_builder_orm.build_delete(table_name, dict_data, value_params)
+
                 yield tx.execute(sql, value_tuple)
             if params_list:
                 yield tx.commit()
                 result = self._gr(self.sql_constants.SUCCESS)
-        except Exception, e:
+        except Exception as e:
             yield tx.rollback()
+            self.logger.info(sql)
             self.logger.exception(e)
-            print sql
             raise self._gr(None)
         raise result
 
+    @tornado.gen.coroutine
     def cache_get(self, key):
-        result = self.redis.get(key)
+        result = yield self.redis.get(key)
         if result:
-            expire = self.redis.ttl(key)
-            if expire < self.properties.get('expire', 'CACHE_REFRESH_EXPIRE'):
-                self.redis.expire(key, self.properties.get('expire', 'CACHE_EXPIRE'))
+            expire = yield self.redis.ttl(key)
+            if expire < int(self.properties.get('expire', 'CACHE_REFRESH_EXPIRE')):
+                yield self.redis.expire(key, int(self.properties.get('expire', 'CACHE_EXPIRE')))
             try:
                 result = json.loads(result)
             except Exception as e:
-                self.redis.expire(key, 0)
+                yield self.redis.expire(key, 0)
                 result = False
                 self.logger.exception(e)
-            return result
+            raise self._gr(result)
         else:
-            return False
+            raise self._gr(False)
 
+    @tornado.gen.coroutine
     def cache_set(self, key, value):
         try:
             value = json.dumps(value, cls=self.date_encoder)
-            self.redis.set(key, value)
-            self.redis.expire(key, self.properties.get('expire', 'CACHE_EXPIRE'))
+            yield self.redis.set(key, value)
+            yield self.redis.expire(key, int(self.properties.get('expire', 'CACHE_EXPIRE')))
+            raise self._gr(True)
         except Exception as e:
+            if isinstance(e, tornado.gen.Return):
+                raise self._gr(e)
             self.logger.exception(e)
-            return
+            raise self._gr(False)
 
+    @tornado.gen.coroutine
     def cache_mget(self, keys):
         """
         批量获取缓存
         :param keys:
         :return:
         """
-        values = self.redis.mget(keys)
+        values = yield self.redis.mget(keys)
         result = list()
         error_keys = list()
         for index in range(len(keys)):
@@ -491,17 +508,18 @@ class AsyncModelBase(SqlBuilder):
                 try:
                     # 更新缓存过期时间
                     result.append(json.loads(values[index]))
-                    expire = self.redis.ttl(keys[index])
-                    if expire < self.properties.get('expire', 'CACHE_REFRESH_EXPIRE'):
-                        self.redis.expire(keys[index], self.properties.get('expire', 'CACHE_EXPIRE'))
+                    expire = yield self.redis.ttl(keys[index])
+                    if expire < int(self.properties.get('expire', 'CACHE_REFRESH_EXPIRE')):
+                        yield self.redis.expire(keys[index], int(self.properties.get('expire', 'CACHE_EXPIRE')))
                 except Exception as e:
                     self.logger.exception(e)
                     error_keys.append(keys[index])
-                    self.redis.expire(keys[index], 0)
+                    yield self.redis.expire(keys[index], 0)
             else:
                 error_keys.append(keys[index])
-        return {'data': result, 'error': error_keys}
+        raise self._gr({'data': result, 'error': error_keys})
 
+    @tornado.gen.coroutine
     def cache_del(self, *key):
         """
         删除缓存
@@ -510,8 +528,6 @@ class AsyncModelBase(SqlBuilder):
         :param key:
         :return:
         """
-        return self.redis.delete(*key)
-
-
-if __name__ == '__main__':
-    print AsyncModelBase().cache_mget(['12', '23'])
+        if key:
+            result = yield self.redis.delete(*key)
+            raise self._gr(result)

@@ -35,7 +35,7 @@ def init(dir_name):
         for file_name in file_names:
             controller_path = parent.replace(root_dir, '').replace('\\', '/') + '/' + file_name.replace('.py', '')
             controller_key = root_path + controller_path.replace('/', '.').replace('\\', '.')
-            if cmp(file_name, '__init__.py') == 0:
+            if file_name == '__init__.py':
                 init_data = importlib.import_module(controller_key)
                 # 忽略掉v1.module.__init__
                 if controller_key != 'v1.module.__init__':
@@ -61,11 +61,11 @@ def init(dir_name):
                         controller_path = r"" + route_path + controller_path + "/*"
                         route.append((controller_path, controller_item))
                         controller_num += 1
-                        print 'register controller: ' + controller_path
-                except Exception, e:
+                        print('register controller: ' + controller_path)
+                except Exception as e:
                     logger.exception(e)
     route.append((r".*", error.Error))
-    print 'controller num: ' + str(controller_num)
+    print('controller num: ' + str(controller_num))
 
 
 init(root_dir)
