@@ -7,7 +7,10 @@
 """
 import xlrd
 import xlwt
-import tornado.gen
+
+from tools.logs import Logs
+
+logger = Logs().logger
 
 
 class excel_util(object):
@@ -33,9 +36,9 @@ class excel_util(object):
                     for r in range(0, len(raw)):
                         sht.write(0, r, raw[r], excel_util.set_style('Times New Roman', 220, True))
             file.save(filePath)
-        except (Exception, IOError), e:
+        except (Exception, IOError) as e:
             result = False
-            print e
+            logger.exception(e)
         return result
 
     @staticmethod
@@ -57,8 +60,8 @@ class excel_util(object):
                     result.append(sheet.row_values(r))
                 sheets.append(result)
                 # print(result)
-        except (Exception, IOError), e:
-            print e
+        except (Exception, IOError) as e:
+            logger.exception(e)
         return sheets
 
     @staticmethod

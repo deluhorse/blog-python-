@@ -33,7 +33,18 @@ class StringUtils(object):
             return num
         return False
 
-
-if __name__ == '__main__':
-    s = StringUtils()
-    print s.money2int(1.134, to_cent=False)
+    @staticmethod
+    def money2yuan(cny=0):
+        """
+         将分转化为元, 保留两位小数
+        :param cny: 
+        :return: 
+        """
+        if not isinstance(cny, int):
+            cny = int(cny)
+        prefix = int(cny / 100)
+        suffix = cny % 100
+        if suffix >= 10:
+            return str(prefix) + '.' + str(suffix)
+        else:
+            return str(prefix) + '.0' + str(suffix)

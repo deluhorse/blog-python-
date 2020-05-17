@@ -11,6 +11,21 @@ import re
 class Verify(object):
 
     @staticmethod
+    def is_valid(account):
+        """
+        校验账号是否有效，账号可能为邮箱、手机号
+        :param account:
+        :return:
+        """
+        if '@' in account:
+            account_type = 'email'
+            result = Verify.isemail(account)
+        else:
+            account_type = 'mobile'
+            result = Verify.ismobile(account)
+        return account_type, result
+
+    @staticmethod
     def ismobile(mobile_no):
         """
          测试手机号是否违法
@@ -26,11 +41,11 @@ class Verify(object):
     @staticmethod
     def isemail(email):
         """
-         测试手机号是否违法
-         :param params: 
-         :return boolean: 
-         """
-        if re.match(r'^(.+@\w+\.\w{2,4})$', email):
+        检验邮箱格式是否正确
+        :param email:
+        :return:
+        """
+        if re.match(r'^(.+?@.+?\.\w{1,5}(\.\w{1,5})?)$|^(1(3|8|5|7)\d{9})$', email):
             return True
         else:
             return False
@@ -42,4 +57,4 @@ class Verify(object):
         return False
 
 if __name__ == "__main__":
-    print Verify.is_id_card('420281199010044620')
+    print(Verify.isemail('cosmewemart@istyle-chinacn'))

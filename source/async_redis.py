@@ -9,11 +9,13 @@
 import tornadoredis
 import tornado.gen
 from source.properties import Properties
+from tools.logs import Logs
 
 properties = Properties()
+logger = Logs().logger
 
 
-class AsyncRedis(object):
+class AsyncRedis:
     # 设置连接池
     CONNECTION_POOL = tornadoredis.ConnectionPool(
         max_connections=int(properties.get('redis', 'REDIS_MAX_CONNECTION')),
@@ -22,14 +24,17 @@ class AsyncRedis(object):
         port=int(properties.get('redis', 'REDIS_PORT'))
     )
 
-    @tornado.gen.coroutine
     def get_conn(self):
         """
         获取redis客户端链接
         :return: 
         """
-        resource = tornadoredis.Client(connection_pool=self.CONNECTION_POOL)
-        raise tornado.gen.Return(resource)
+        resource = tornadoredis.Client(
+            connection_pool=self.CONNECTION_POOL,
+            password=properties.get('redis', 'REDIS_PASS'),
+            selected_db=properties.get('redis', 'REDIS_DB')
+        )
+        return resource
 
     @tornado.gen.coroutine
     def set(self, key, value, second=0):
@@ -41,19 +46,21 @@ class AsyncRedis(object):
         :return:
         """
         resource = None
+        result = False
         try:
             # 使用管道设置值
-            resource = yield self.get_conn()
+            resource = self.get_conn()
             with resource.pipeline() as pipe:
                 pipe.set(key, value)
                 if second > 0:
                     pipe.expire(key, int(second))
 
-                yield tornado.gen.Task(pipe.execute)
-        except Exception, e:
-            print e
+                result = yield tornado.gen.Task(pipe.execute)
+        except Exception as e:
+            logger.exception(e)
         finally:
             yield tornado.gen.Task(resource.disconnect)
+            raise tornado.gen.Return(result)
 
     @tornado.gen.coroutine
     def get(self, key):
@@ -65,10 +72,47 @@ class AsyncRedis(object):
         resource = None
         value = None
         try:
-            resource = yield self.get_conn()
+            resource = self.get_conn()
             value = yield tornado.gen.Task(resource.get, key)
-        except Exception, e:
-            print e
+        except Exception as e:
+            logger.exception(e)
+        finally:
+            yield tornado.gen.Task(resource.disconnect)
+            raise tornado.gen.Return(value)
+
+    @tornado.gen.coroutine
+    def exists(self, key):
+        """
+        查询值是否存在
+        :param key:
+        :return:
+        """
+        resource = None
+        value = False
+        try:
+            resource = self.get_conn()
+            value = yield tornado.gen.Task(resource.exists, key)
+        except Exception as e:
+            logger.exception(e)
+        finally:
+            yield tornado.gen.Task(resource.disconnect)
+            raise tornado.gen.Return(value)
+
+    @tornado.gen.coroutine
+    def hmget(self, key, fields):
+        """
+        批量获取map中指定区域的值
+        :param key:
+        :param fields
+        :return:
+        """
+        resource = None
+        value = False
+        try:
+            resource = self.get_conn()
+            value = yield tornado.gen.Task(resource.hmget, key, fields)
+        except Exception as e:
+            logger.exception(e)
         finally:
             yield tornado.gen.Task(resource.disconnect)
             raise tornado.gen.Return(value)
@@ -83,19 +127,92 @@ class AsyncRedis(object):
         :return:
         """
         resource = None
+        result = False
         try:
             # 使用管道设置值
-            resource = yield self.get_conn()
+            resource = self.get_conn()
             with resource.pipeline() as pipe:
                 pipe.hmset(key, value)
                 if second > 0:
                     pipe.expire(key, int(second))
 
-                yield tornado.gen.Task(pipe.execute)
-        except Exception, e:
-            print e
+                result = yield tornado.gen.Task(pipe.execute)
+        except Exception as e:
+            logger.exception(e)
         finally:
             yield tornado.gen.Task(resource.disconnect)
+            raise tornado.gen.Return(result)
+
+    @tornado.gen.coroutine
+    def hset(self, key, field, value):
+        """
+        :author: maozhufeng
+        :param key: redis键值
+        :param field: hashmap中键值
+        :param value:
+        :return:
+        """
+        resource = None
+        result = False
+        try:
+            # 使用管道设置值
+            resource = self.get_conn()
+            with resource.pipeline() as pipe:
+                pipe.hset(key, field, value)
+                result = yield tornado.gen.Task(pipe.execute)
+        except Exception as e:
+            logger.exception(e)
+        finally:
+            yield tornado.gen.Task(resource.disconnect)
+            raise tornado.gen.Return(result)
+
+    @tornado.gen.coroutine
+    def hget(self, key, field):
+        """
+        :author: maozhufeng
+        :param key: redis键值
+        :param field: hashmap中键值
+        :return:
+        """
+        resource = None
+        result = None
+        try:
+            # 使用管道设置值
+            resource = self.get_conn()
+            with resource.pipeline() as pipe:
+                pipe.hget(key, field)
+                result = yield tornado.gen.Task(pipe.execute)
+        except Exception as e:
+            logger.exception(e)
+        finally:
+            yield tornado.gen.Task(resource.disconnect)
+            if isinstance(result, list):
+                result = result[0]
+            raise tornado.gen.Return(result)
+
+    @tornado.gen.coroutine
+    def hdel(self, key, field, *args):
+        """
+        :author: maozhufeng
+        :param key: redis键值
+        :param field: hashmap中键值
+        :return:
+        """
+        resource = None
+        result = None
+        try:
+            # 使用管道设置值
+            resource = self.get_conn()
+            with resource.pipeline() as pipe:
+                pipe.hdel(key, field, args)
+                result = yield tornado.gen.Task(pipe.execute)
+        except Exception as e:
+            logger.exception(e)
+        finally:
+            yield tornado.gen.Task(resource.disconnect)
+            if isinstance(result, list):
+                result = result[0]
+            raise tornado.gen.Return(result)
 
     @tornado.gen.coroutine
     def hgetall(self, key):
@@ -107,10 +224,28 @@ class AsyncRedis(object):
         resource = None
         value = None
         try:
-            resource = yield self.get_conn()
+            resource = self.get_conn()
             value = yield tornado.gen.Task(resource.hgetall, key)
-        except Exception, e:
-            print e
+        except Exception as e:
+            logger.exception(e)
+        finally:
+            yield tornado.gen.Task(resource.disconnect)
+            raise tornado.gen.Return(value)
+
+    @tornado.gen.coroutine
+    def hincrby(self, key, field, increment=1):
+        """
+        :author: onlyfu
+        :param key:
+        :return:
+        """
+        resource = None
+        value = None
+        try:
+            resource = self.get_conn()
+            value = yield tornado.gen.Task(resource.hincrby, key, field, increment)
+        except Exception as e:
+            logger.exception(e)
         finally:
             yield tornado.gen.Task(resource.disconnect)
             raise tornado.gen.Return(value)
@@ -120,10 +255,10 @@ class AsyncRedis(object):
         resource = None
         value = None
         try:
-            resource = yield self.get_conn()
+            resource = self.get_conn()
             value = yield tornado.gen.Task(resource.mget, key)
-        except Exception, e:
-            print e
+        except Exception as e:
+            logger.exception(e)
         finally:
             yield tornado.gen.Task(resource.disconnect)
             raise tornado.gen.Return(value)
@@ -132,16 +267,18 @@ class AsyncRedis(object):
     def ttl(self, key):
         """
         :author: onlyfu
+        if key not exist return None
         :param key:
         :return:
         """
         resource = None
-        value = None
+        value = -2
         try:
-            resource = yield self.get_conn()
+            resource = self.get_conn()
             value = yield tornado.gen.Task(resource.ttl, key)
-        except Exception, e:
-            print e
+            value = -1 if value is None else value
+        except Exception as e:
+            logger.exception(e)
         finally:
             yield tornado.gen.Task(resource.disconnect)
             raise tornado.gen.Return(value)
@@ -154,15 +291,17 @@ class AsyncRedis(object):
         :param second:
         :return:
         """
+        result = False
         resource = None
         try:
             # 使用管道设置值
-            resource = yield self.get_conn()
-            yield tornado.gen.Task(resource.expire, key, int(second))
-        except Exception, e:
-            print e
+            resource = self.get_conn()
+            result = yield tornado.gen.Task(resource.expire, key, int(second))
+        except Exception as e:
+            logger.exception(e)
         finally:
             yield tornado.gen.Task(resource.disconnect)
+            raise tornado.gen.Return(result)
 
     @tornado.gen.coroutine
     def incr(self, key, amount=1):
@@ -170,10 +309,10 @@ class AsyncRedis(object):
         value = 0
         try:
             # 使用管道设置值
-            resource = yield self.get_conn()
+            resource = self.get_conn()
             value = yield tornado.gen.Task(resource.incrby, key, amount)
-        except Exception, e:
-            print e
+        except Exception as e:
+            logger.exception(e)
         finally:
             yield tornado.gen.Task(resource.disconnect)
             raise tornado.gen.Return(value)
@@ -184,35 +323,79 @@ class AsyncRedis(object):
         value = 0
         try:
             # 使用管道设置值
-            resource = yield self.get_conn()
+            resource = self.get_conn()
             value = yield tornado.gen.Task(resource.decrby, key, amount)
-        except Exception, e:
-            print e
+        except Exception as e:
+            logger.exception(e)
         finally:
             yield tornado.gen.Task(resource.disconnect)
             raise tornado.gen.Return(value)
 
     @tornado.gen.coroutine
-    def sadd(self, key, value):
+    def sadd(self, key, value, *args):
         resource = None
+        # 未操作成功默认返回0，操作成功返回1
+        result = 0
         try:
             # 使用管道设置值
-            resource = yield self.get_conn()
-            yield tornado.gen.Task(resource.sadd, key, value)
-        except Exception, e:
-            print e
+            resource = self.get_conn()
+            result = yield tornado.gen.Task(resource.sadd, key, value, *args)
+        except Exception as e:
+            logger.exception(e)
         finally:
             yield tornado.gen.Task(resource.disconnect)
+            raise tornado.gen.Return(result)
+
+    @tornado.gen.coroutine
+    def scard(self, key):
+        resource = None
+        # 未操作成功默认返回0
+        result = 0
+        try:
+            # 使用管道设置值
+            resource = self.get_conn()
+            result = yield tornado.gen.Task(resource.scard, key)
+        except Exception as e:
+            logger.exception(e)
+        finally:
+            yield tornado.gen.Task(resource.disconnect)
+            raise tornado.gen.Return(result)
 
     @tornado.gen.coroutine
     def smembers(self, key):
         resource = None
         value = None
         try:
-            resource = yield self.get_conn()
+            resource = self.get_conn()
             value = yield tornado.gen.Task(resource.smembers, key)
-        except Exception, e:
-            print e
+        except Exception as e:
+            logger.exception(e)
+        finally:
+            yield tornado.gen.Task(resource.disconnect)
+            raise tornado.gen.Return(value)
+
+    @tornado.gen.coroutine
+    def sismember(self, key, member):
+        resource = None
+        value = None
+        try:
+            resource = self.get_conn()
+            value = yield tornado.gen.Task(resource.sismember, key, member)
+        except Exception as e:
+            logger.exception(e)
+        finally:
+            yield tornado.gen.Task(resource.disconnect)
+            raise tornado.gen.Return(value)
+
+    @tornado.gen.coroutine
+    def srem(self, key, member_list):
+        resource = None
+        value = None
+        try:
+            resource = self.get_conn()
+            value = yield tornado.gen.Task(resource.srem, key, member_list)
+        except Exception as e:
+            logger.exception(e)
         finally:
             yield tornado.gen.Task(resource.disconnect)
             raise tornado.gen.Return(value)
@@ -222,40 +405,109 @@ class AsyncRedis(object):
         resource = None
         value = None
         try:
-            resource = yield self.get_conn()
+            resource = self.get_conn()
             value = yield tornado.gen.Task(resource.spop, key)
-        except Exception, e:
-            print e
+        except Exception as e:
+            logger.exception(e)
         finally:
             yield tornado.gen.Task(resource.disconnect)
             raise tornado.gen.Return(value)
 
     @tornado.gen.coroutine
-    def delete(self, key):
+    def srem(self, key, value):
+        resource = None
+        result = None
+        try:
+            resource = self.get_conn()
+            result = yield tornado.gen.Task(resource.srem, key, value)
+        except Exception as e:
+            logger.exception(e)
+        finally:
+            yield tornado.gen.Task(resource.disconnect)
+            raise tornado.gen.Return(result)
+
+    @tornado.gen.coroutine
+    def delete(self, key, *args):
         """
         删除内存中值
         :param key: 
         :return: 
         """
         resource = None
+        result = False
         try:
-            resource = yield self.get_conn()
+            resource = self.get_conn()
             with resource.pipeline() as pipe:
-                pipe.delete(key)
-                yield tornado.gen.Task(pipe.execute)
-        except Exception, e:
-            print e
+                pipe.delete(key, *args)
+                result = yield tornado.gen.Task(pipe.execute)
+        except Exception as e:
+            logger.exception(e)
         finally:
             yield tornado.gen.Task(resource.disconnect)
+            raise tornado.gen.Return(result)
 
     @tornado.gen.coroutine
-    def lpush(self, key, value):
+    def lpush(self, key, value, *args):
         resource = None
+        result = 0
         try:
             # 使用管道设置值
-            resource = yield self.get_conn()
-            yield tornado.gen.Task(resource.lpush, key, value)
-        except Exception, e:
-            print e
+            resource = self.get_conn()
+            result = yield tornado.gen.Task(resource.lpush, key, value, *args)
+        except Exception as e:
+            logger.exception(e)
         finally:
             yield tornado.gen.Task(resource.disconnect)
+            raise tornado.gen.Return(result)
+
+    @tornado.gen.coroutine
+    def rpush(self, key, value, *args):
+        resource = None
+        result = 0
+        try:
+            resource = self.get_conn()
+            result = yield tornado.gen.Task(resource.rpush, key, value, *args)
+        except Exception as e:
+            logger.exception(e)
+        finally:
+            yield tornado.gen.Task(resource.disconnect)
+            raise tornado.gen.Return(result)
+
+    @tornado.gen.coroutine
+    def rpop(self, key):
+        resource = None
+        value = None
+        try:
+            resource = self.get_conn()
+            value = yield tornado.gen.Task(resource.rpop, key)
+        except Exception as e:
+            logger.exception(e)
+        finally:
+            yield tornado.gen.Task(resource.disconnect)
+            raise tornado.gen.Return(value)
+
+    @tornado.gen.coroutine
+    def llen(self, key):
+        resource = None
+        value = None
+        try:
+            resource = self.get_conn()
+            value = yield tornado.gen.Task(resource.llen, key)
+        except Exception as e:
+            logger.exception(e)
+        finally:
+            yield tornado.gen.Task(resource.disconnect)
+            raise tornado.gen.Return(value)
+
+    @tornado.gen.coroutine
+    def lrange(self, key, start, end):
+        resource = None
+        value = None
+        try:
+            resource = self.get_conn()
+            value = yield tornado.gen.Task(resource.lrange, key, start, end)
+        except Exception as e:
+            logger.exception(e)
+        finally:
+            yield tornado.gen.Task(resource.disconnect)
+            raise tornado.gen.Return(value)

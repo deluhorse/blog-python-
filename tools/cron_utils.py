@@ -130,20 +130,3 @@ class CronUtils(object):
                             return int(str_item), index, 0, str_list, 1
                 return int(str_list[0]), 0, -1, str_list, 1
 
-
-if __name__ == '__main__':
-    cron_utils = CronUtils()
-    current_time = int(time.time())
-    cron_str = '0 0 1 * *'
-    # cron_str = '0 0 10,17 * *'
-    for i in range(20):
-        left_time = cron_utils.analyze(current_time, cron_str)
-        if left_time == 0:
-            left_time += 1
-            print DateUtils.format_time(current_time), left_time
-            current_time += left_time
-        else:
-            current_time += left_time
-            print DateUtils.format_time(current_time), left_time
-            current_time += 1
-

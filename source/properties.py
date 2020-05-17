@@ -16,8 +16,7 @@ class Properties(object):
         file_name = file_name if file_name else 'setting'
         self.properties = configparser.ConfigParser()
         try:
-            # self.properties.read('/apps/conf/blog/' + file_name + '.conf')
-            self.properties.read('../' + file_name + '.conf')
+            self.properties.read('/apps/conf/blog/' + file_name + '.conf', encoding='utf-8')
         except Exception as e:
             self.logger.exception(e)
 
@@ -26,3 +25,4 @@ class Properties(object):
             return self.properties.get(section, option)
         except Exception as e:
             self.logger.exception(e)
+            return ""

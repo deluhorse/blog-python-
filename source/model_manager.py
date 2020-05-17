@@ -8,7 +8,6 @@
 import importlib
 
 from source.redisbase import RedisBase
-from system_constants import SystemConstants
 from tools.httputils import HttpUtils
 
 redis = RedisBase()
@@ -42,15 +41,14 @@ class ModelManager(object):
         :return: 
         """
         try:
-            if cmp(http_type, 'post') == 0:
+            if http_type == 'post':
                 # 发送post请求
                 HttpUtils.do_post(url, params)
             else:
                 # 发送get请求
                 HttpUtils.do_get(url, params)
-        except Exception, e:
-            print Exception, ':', e
-            return SystemConstants.REMOTE_SERVICE_ERROR
+        except Exception as e:
+            pass
 
     @staticmethod
     def do_model(model_path='', method='', params={}, version=''):

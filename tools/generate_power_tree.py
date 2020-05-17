@@ -6,7 +6,42 @@
 """
 import re
 
-from module.user.auth.power import PowerTree
+
+class PowerTree:
+    """
+    定义权限的数据结构
+    @author xhb
+    @time 2017/12/06
+    """
+
+    def __init__(self, power_id):
+        self.name = ''
+        self.parent_id = 0
+        self.power_id = power_id
+        self.path = ''
+        self.is_check_path = True
+        self.index = 0
+        self.group = 0
+        self.children = []
+
+    def get_dict(self):
+        power_dict = {
+            'parent_id': self.parent_id,
+            'power_id': self.power_id,
+            'name': self.name,
+            'path': self.path,
+            'is_check_path': self.is_check_path,
+            'index': self.index,
+            'group': self.group
+        }
+
+        children_list = []
+        for child in self.children:
+            children_list.append(child.get_dict())
+
+        power_dict['child'] = children_list
+
+        return power_dict
 
 
 class GeneratePowerTree(object):
@@ -112,7 +147,7 @@ class GeneratePowerTree(object):
         insert_node_index = -1
         for k, child in enumerate(node_list):
             child_index = child.index if hasattr(child, 'index') else 0
-            if child_index > index:
+            if float(child_index) > float(index):
                 insert_node_index = k
                 break
 
@@ -122,8 +157,8 @@ class GeneratePowerTree(object):
             node_list.insert(insert_node_index, power_node)
         return node_dict
 
-if __name__ == '__main__':
-    import json
-    from route import power
-    power_tree = GeneratePowerTree().generate_power_tree(power)
-    print json.dumps(power_tree)
+# if __name__ == '__main__':
+#     import json
+#     from route import power
+#     power_tree = GeneratePowerTree().generate_power_tree(power)
+#     print json.dumps(power_tree)

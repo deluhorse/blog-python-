@@ -5,6 +5,7 @@
 @file: sql_builder.py
 @time: 17/4/20 上午10:23
 """
+import pymysql
 from source.properties import Properties
 from source.sql_constants import SqlConstants
 
@@ -89,7 +90,9 @@ class SqlBuilder(object):
 
         str_condition = self.build_condition(dic_data[SqlConstants.CONDITION])
 
-        return "select count(*) as row_count from %s %s %s" % (str_table_name, str_join, str_condition)
+        str_group_by = self.build_group_by(dic_data[SqlConstants.GROUP_BY])
+
+        return "select count(*) as row_count from %s %s %s %s" % (str_table_name, str_join, str_condition, str_group_by)
 
     def build_insert(self, str_table_name, dic_data):
         """ 插入数据
@@ -169,6 +172,9 @@ class SqlBuilder(object):
         # group_by
         dic_data[SqlConstants.GROUP_BY] = dic_data[SqlConstants.GROUP_BY] if SqlConstants.GROUP_BY in dic_data else ''
 
+        # having
+        dic_data[SqlConstants.HAVING] = dic_data[SqlConstants.HAVING] if SqlConstants.HAVING in dic_data else ''
+
         # limit
         dic_data[SqlConstants.LIMIT] = dic_data[SqlConstants.LIMIT] if SqlConstants.LIMIT in dic_data else ''
 
@@ -237,6 +243,14 @@ class SqlBuilder(object):
         """
         return 'group by %s' % str_group_by if str_group_by else ''
 
+    def build_having(self, str_having):
+        """
+        分组过滤条件
+        :param str_having:
+        :return:
+        """
+        return 'having %s' % str_having if str_having else ''
+
     def build_order(self, str_order):
         """ 构建order
         未完成
@@ -269,25 +283,25 @@ class SqlBuilder(object):
         else:
             return ''
 
-    def escapeString(self, dic_data):
-        if dic_data:
-            if isinstance(dic_data, dict) == False:
-                # print dic_data
-                if type(dic_data) == str or type(dic_data) == unicode:
-                    dic_data = dic_data.encode('utf8')
-                return MySQLdb.escape_string(dic_data)
-            else:
-                for k, v in dic_data.iteritems():
-                    # print type(v)
-                    if type(v) == str or type(v) == unicode:
-                        v = v.encode('utf8')
-                    # print v
+    # def escapeString(self, dic_data):
+    #     if dic_data:
+    #         if isinstance(dic_data, dict) == False:
+    #             # print dic_data
+    #             if type(dic_data) == str:
+    #                 dic_data = dic_data.encode('utf8')
+    #             return MySQLdb.escape_string(dic_data)
+    #         else:
+    #             for k, v in dic_data.iteritems():
+    #                 # print type(v)
+    #                 if type(v) == str:
+    #                     v = v.encode('utf8')
+    #                 # print v
 
-                    dic_data[k] = MySQLdb.escape_string(str(v))
-                    # dic_data[k] = str(v).replace('\'', '\\\'').replace('"', '\"')
-                # exit()
-                return dic_data
-        return False
+    #                 dic_data[k] = MySQLdb.escape_string(str(v))
+    #                 # dic_data[k] = str(v).replace('\'', '\\\'').replace('"', '\"')
+    #             # exit()
+    #             return dic_data
+    #    return False
 
     def build_in(self, length=0):
         """

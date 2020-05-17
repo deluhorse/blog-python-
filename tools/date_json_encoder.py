@@ -20,4 +20,4 @@ class CJsonEncoder(json.JSONEncoder):
         elif isinstance(obj, (decimal.Decimal,)):
             return str(obj)
         else:
-            return super.default(obj)
+            return super().default(obj)

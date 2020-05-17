@@ -8,8 +8,9 @@ import tornado.escape
 import tornado.gen
 import tornado.ioloop
 import tornado.web
+import tornado.httpserver
 
-from source.redisbase import RedisBase
+from tools.logs import Logs
 
 
 class Controller(tornado.web.RequestHandler):
@@ -27,6 +28,7 @@ class Controller(tornado.web.RequestHandler):
     escape = tornado.escape
     version = ''
     importlib = importlib
+    logger = Logs().logger
 
     def initialize(self):
         """
@@ -57,6 +59,7 @@ class Controller(tornado.web.RequestHandler):
                 self.render("%s/%s/%s.html" % (view_path, self.__class__.__name__, view_name),
                             controller=self.__class__.__name__, **self.view_data)
             except Exception as e:
+                self.logger.exception(e)
                 self.redirect('/700')
                 return
         else:
@@ -80,7 +83,7 @@ class Controller(tornado.web.RequestHandler):
                         value_strip.append(item.strip())
                     result[k] = value_strip
                 else:
-                    result[k] = v[0].strip()
+                    result[k] = v[0].strip().decode('utf-8')
             return result
         else:
             try:
@@ -91,8 +94,8 @@ class Controller(tornado.web.RequestHandler):
                         value_strip.append(item.strip())
                     return value_strip
                 else:
-                    return value[0].strip()
-            except Exception:
+                    return value[0].strip().decode('utf-8')
+            except Exception as e:
                 return ''
 
     def import_model(self, model_name):
@@ -106,6 +109,7 @@ class Controller(tornado.web.RequestHandler):
             model = importlib.import_module(self.version + '.model.' + model_name)
             return model.Model(self.model)
         except Exception as e:
+            self.logger.exception(e)
             return None
 
     def import_service(self, service_name):
@@ -119,6 +123,7 @@ class Controller(tornado.web.RequestHandler):
             service = importlib.import_module(self.version + '.service.' + service_name)
             return service.Service()
         except Exception as e:
+            self.logger.exception(e)
             return None
 
     def write_error(self, status_code, **kwargs):
@@ -145,20 +150,22 @@ class Controller(tornado.web.RequestHandler):
         """
         if self._headers_written:
             # gen_log.error("Cannot send error response after headers written")
-            print('Cannot send error response after headers written')
+            self.logger.info('Cannot send error response after headers written')
             if not self._finished:
                 self.finish()
             return
         self.clear()
 
         if 'exc_info' in kwargs:
-            kwargs['traceback_error'] = traceback.format_exc(kwargs['exc_info'][2])
+            kwargs['traceback_error'] = traceback.format_exc()
         self.set_status(status_code)
         try:
             self.write_error(status_code, **kwargs)
         except Exception as e:
-            if not self._finished:
-                self.finish()
+            self.logger.exception(e)
+
+        if not self._finished:
+            self.finish()
 
 
 class server(object):

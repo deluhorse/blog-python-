@@ -9,11 +9,20 @@ import time
 import datetime
 import calendar
 
+from tools.logs import Logs
+
+logger = Logs().logger
+
 
 class DateUtils(object):
 
     YYYY_MM_DD = '%Y-%m-%d'
+    YYYY_MM_DD_HH_MM = '%Y-%m-%d %H:%M'
     YYYY_MM_DD_HH_MM_SS = '%Y-%m-%d %H:%M:%S'
+    YYYY_MM_DD_HH_MM_STR = '%Y年%m月%d日 %H:%M'
+    YYYY_MM_DD_HH_MM_SS_INT = '%Y%m%d%H%M%S'
+    FOREVER_START_TIME = '2000-01-01 00:00:00'
+    FOREVER_END_TIME = '3000-01-01 00:00:00'
 
     @staticmethod
     def format_time(timestamp, time_format='%Y-%m-%d %H:%M:%S'):
@@ -26,12 +35,26 @@ class DateUtils(object):
         return time.strftime(time_format, time.localtime(timestamp))
 
     @staticmethod
-    def time_now(time_format='%Y-%m-%d %H:%M:%S'):
+    def time_now(time_format='%Y-%m-%d %H:%M:%S', is_timestamp=False):
         """
         获取当前时间，yyyy-mm-dd H:M:S
         :return: 
         """
+        if is_timestamp:
+            return int(time.time())
         return DateUtils.format_time(time.time(), time_format)
+
+    @staticmethod
+    def date_time_now():
+        return datetime.datetime.now()
+
+    @staticmethod
+    def timestamps_now():
+        """
+        获取当前时间戳
+        :return:
+        """
+        return time.time()
 
     @staticmethod
     def str_to_time(date, format_date="%Y-%m-%d %H:%M:%S"):
@@ -42,9 +65,10 @@ class DateUtils(object):
         """
         try:
             time_array = time.strptime(date, format_date)
-            return int(str(time.mktime(time_array)).split('.')[0])
-        except Exception, e:
-            print e
+            time_str = str(time.mktime(time_array))
+            return int(time_str.split('.')[0])
+        except Exception as e:
+            logger.exception(e)
             return 0
 
     @staticmethod
@@ -69,6 +93,20 @@ class DateUtils(object):
         time_array = time.strptime(date_str, format_date)
         mytime = str(time.mktime(time_array)).split('.')[0]
         mytime = int(mytime) + (60 * minutes)
+        return time.strftime(format_date, time.localtime(mytime))
+
+    @staticmethod
+    def add_second(date_str, format_date='%Y-%m-%d %H:%M:%S', seconds=0):
+        """
+        增加分钟
+        :param date_str: 日期字符串
+        :param format_date:
+        :param seconds: 增加的秒数
+        :return: 
+        """
+        time_array = time.strptime(date_str, format_date)
+        mytime = str(time.mktime(time_array)).split('.')[0]
+        mytime = int(mytime) + seconds
         return time.strftime(format_date, time.localtime(mytime))
 
     @staticmethod
@@ -97,12 +135,12 @@ class DateUtils(object):
                 i -= 1
                 j = 12
             this_year += i
-            days = str(DateUtils.get_days_of_month(this_year, j))
+            days = str(DateUtils.get_days_of_month(int(this_year), j))
             j = DateUtils.add_zero(j)
             if (this_day > 0) and (this_day < 10):
                 this_day = DateUtils.add_zero(this_day)
 
-            return str(this_year), str(j), days, this_day
+            return int(this_year), str(j), days, this_day
 
     @staticmethod
     def get_days_of_month(year, mon):
@@ -133,6 +171,14 @@ class DateUtils(object):
 
 if __name__ == '__main__':
     # print DateUtils.add_minute(DateUtils.time_now(DateUtils.YYYY_MM_DD) + ' 00:00:00', minutes=25 * 60, type='str')
-    print DateUtils.str_to_time(DateUtils.time_now())
+    # print(DateUtils.str_to_time(DateUtils.time_now()))
+    DateUtils.str_to_time('3001-01-19 20:00:00')
+    # from functools import reduce
+    # add_minute = lambda x, y: DateUtils.add_minute(x, minutes=y)
+    # print(reduce(add_minute, ['2018-01-01 00:00:01', 5, 10]))
+    current_datetime = datetime.datetime.now()
+    current_second = current_datetime.second
+    next_datetime = current_datetime + datetime.timedelta(minutes=1)
+    next_timestamp = time.mktime(next_datetime.timetuple())
 
 

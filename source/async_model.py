@@ -1,10 +1,12 @@
 # -*- coding:utf-8 -*-
 
 import tornado.gen
-import tormysql
+import tornado_mysql
+from tornado_mysql import pools
 import json
 
 from constants.cachekey_predix import CacheKeyPredix
+# from source.redisbase import RedisBase
 from source.async_redis import AsyncRedis
 from source.properties import Properties
 from source.sql_builder import SqlBuilder
@@ -19,19 +21,17 @@ properties = Properties()
 
 
 class AsyncModelBase(SqlBuilder):
-    async_pools = tormysql.helpers.ConnectionPool(
-        max_connections=20,  # max open connections
-        idle_seconds=150,  # conntion idle timeout time, 0 is not timeout
-        wait_connection_timeout=3,  # wait connection timeout
+    async_pools = pools.Pool(dict(
         host=properties.get('jdbc', 'DB_HOST'),
         port=int(properties.get('jdbc', 'DB_PORT')),
         user=properties.get('jdbc', 'DB_USER'),
         passwd=properties.get('jdbc', 'DB_PASS'),
         db=properties.get('jdbc', 'DB_BASE'),
-        charset="utf8mb4",
-        cursorclass=tormysql.cursor.DictCursor
-        # max_recycle_sec=int(properties.get('jdbc', 'MAX_RECYCLE_SEC'))
-    )
+        charset='utf8',
+        autocommit=False,
+        cursorclass=tornado_mysql.cursors.DictCursor
+    ), max_idle_connections=5, max_open_connections=10, max_recycle_sec=int(properties.get('jdbc', 'MAX_RECYCLE_SEC')))
+
     tx = None
     sql_builder_orm = None
     if not sql_builder_orm:
@@ -142,16 +142,13 @@ class AsyncModelBase(SqlBuilder):
         raise self._gr(result)
 
     @tornado.gen.coroutine
-    def find(self, table_name='', params={}, value_tuple=(), str_type='one', sql=''):
+    def find(self, table_name, params={}, value_tuple=(), str_type='one'):
         """
         查询
-        :param params:
-        :return:
+        :param params: 
+        :return: 
         """
-        if sql:
-            sql = sql
-        else:
-            sql = self.build_select(table_name, params)
+        sql = self.build_select(table_name, params)
         result = False
         try:
             cursor = yield self.async_pools.execute(sql, value_tuple)
